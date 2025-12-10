@@ -24,7 +24,7 @@ class HikingTrailSeeder extends Seeder
                 'is_guide_required' => false,
                 // Link Peta 3D kamu
                 'map_iframe_url' => 'https://gpx.studio/embed?options=%7B%22token%22%3A%22YOUR_MAPBOX_TOKEN%22%2C%22ids%22%3A%5B%221nuIC3mB6Bq1W64PpKWIus33VJj7r2dP9%22%5D%7D#13.59/-8.2844/115.4183/100.0/42',
-                'cover_image' => 'https://images.unsplash.com/photo-1571052679234-9344444585c5?q=80&w=1000&auto=format&fit=crop', 
+                'cover_image' => 'https://m-kuta.com/wp-content/uploads/2019/10/gunung-abang-1.jpg', 
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -42,7 +42,7 @@ class HikingTrailSeeder extends Seeder
                 'is_guide_required' => true, // Wajib guide
                 // Contoh dummy iframe lain
                 'map_iframe_url' => 'https://gpx.studio/embed?options=...', 
-                'cover_image' => 'https://images.unsplash.com/photo-1605606309854-94474776104e?q=80&w=1000',
+                'cover_image' => 'https://upload.wikimedia.org/wikipedia/commons/4/47/Mount_Batur.JPG',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
