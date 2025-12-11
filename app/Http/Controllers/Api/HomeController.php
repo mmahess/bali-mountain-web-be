@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\OpenTrip;
 use App\Models\CommunityPost;
 use App\Models\HikingTrail;
+use App\Models\News;
 
 class HomeController extends Controller
 {
@@ -32,6 +33,27 @@ class HomeController extends Controller
                 'trails' => $trails,
                 'trips' => $trips,
                 'gallery' => $gallery
+            ]
+        ]);
+
+        // 4. Ambil Berita
+        // Ambil 1 berita penting terbaru
+        $importantNews = News::where('is_important', true)->latest()->first();
+        
+        // Ambil 3 berita biasa terbaru
+        $latestNews = News::where('is_important', false)->latest()->take(3)->get();
+
+        return response()->json([
+            'message' => 'Data Homepage berhasil diambil',
+            'data' => [
+                'trails' => $trails,
+                'trips' => $trips,
+                'gallery' => $gallery,
+                // Kirim paket berita
+                'news' => [
+                    'important' => $importantNews,
+                    'list' => $latestNews
+                ]
             ]
         ]);
     }
