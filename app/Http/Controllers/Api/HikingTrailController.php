@@ -22,11 +22,14 @@ class HikingTrailController extends Controller
 
     public function show($slug)
     {
-        $trail = HikingTrail::where('slug', $slug)->firstOrFail();
+    // Eager Load: Ambil juga data 'images' dan 'reviews' beserta 'user' penulisnya
+    $trail = HikingTrail::with(['images', 'reviews.user'])
+                ->where('slug', $slug)
+                ->firstOrFail();
 
-        return response()->json([
-            'message' => 'Detail gunung berhasil diambil',
-            'data' => $trail
-        ]);
-    }
+    return response()->json([
+        'message' => 'Detail gunung berhasil diambil',
+        'data' => $trail
+    ]);
+}
 }
