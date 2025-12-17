@@ -12,14 +12,29 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('news', function (Blueprint $table) {
-        $table->id();
-        $table->string('title');
-        $table->string('slug')->unique();
-        $table->text('excerpt'); // Ringkasan pendek
-        $table->longText('content'); // Isi berita full
-        $table->string('thumbnail')->nullable();
-        $table->boolean('is_important')->default(false); // Penanda berita penting (Big Card)
-        $table->timestamps();
+            $table->id();
+            
+            // Kolom Standar
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->text('excerpt')->nullable();
+            $table->longText('content');
+            $table->string('thumbnail');
+            $table->boolean('is_important')->default(false);
+            
+            // --- KOLOM BARU YANG KITA BUTUHKAN ---
+            // 1. Kategori (Default: Tips)
+            $table->string('category')->default('Tips');
+            
+            // 2. Penulis (User ID)
+            // nullable() agar aman jika user dihapus
+            // constrained() otomatis relasi ke tabel users
+            $table->foreignId('user_id')
+                  ->nullable()
+                  ->constrained('users')
+                  ->onDelete('set null');
+
+            $table->timestamps();
         });
     }
 

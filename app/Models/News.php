@@ -8,5 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class News extends Model
 {
     use HasFactory;
+
+    // Izinkan semua kolom diisi (Matikan proteksi mass assignment)
     protected $guarded = [];
+    public function user()
+    {
+    return $this->belongsTo(User::class);
+    }
+
+    // Jika nanti butuh relasi ke user
+    // public function user() { return $this->belongsTo(User::class); }
 }
