@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HikingTrailController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\CommunityController;
+use App\Http\Controllers\Api\NewsController;
 
 // --- ROUTE PUBLIC (Tidak butuh Token) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -14,6 +15,8 @@ Route::get('/mountains', [HikingTrailController::class, 'index']);
 Route::get('/mountains/{slug}', [HikingTrailController::class, 'show']);
 Route::get('/home', [HomeController::class, 'index']);
 Route::get('/community', [CommunityController::class, 'index']);
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{slug}', [NewsController::class, 'show']);
 
 // --- ROUTE PRIVATE (Harus Login / Punya Token) ---
 Route::middleware('auth:sanctum')->group(function () {
