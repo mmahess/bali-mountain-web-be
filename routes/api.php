@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\HikingTrailController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\OpenTripController;
 
 
 // --- ROUTE PUBLIC (Tidak butuh Token) ---
@@ -35,4 +36,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/news', [NewsController::class, 'store']);
     Route::put('/news/{id}', [NewsController::class, 'update']);
     Route::delete('/news/{id}', [NewsController::class, 'destroy']);
+    Route::post('/open-trips', [OpenTripController::class, 'store']);
+    Route::get('/my-trips', [OpenTripController::class, 'myTrips']);
+    Route::put('/open-trips/{id}', [OpenTripController::class, 'update']);
+    Route::delete('/open-trips/{id}', [OpenTripController::class, 'destroy']);
+    Route::post('/open-trips/{id}/join', [OpenTripController::class, 'join']);
+    Route::get('/open-trips/{id}/participants', [OpenTripController::class, 'getParticipants']);
+    Route::get('/joined-trips', [OpenTripController::class, 'joinedTrips']);
+    Route::delete('/open-trips/{tripId}/participants/{userId}', [OpenTripController::class, 'removeParticipant']);
+    Route::post('/open-trips/{id}/leave', [OpenTripController::class, 'leave']);
 });
