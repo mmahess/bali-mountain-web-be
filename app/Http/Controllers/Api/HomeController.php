@@ -13,7 +13,7 @@ class HomeController extends Controller
     public function index()
     {
         // 1. Ambil Data Gunung (Limit 4 untuk Popular Section)
-        $trails = HikingTrail::select('id', 'name', 'slug', 'location', 'cover_image', 'difficulty_level', 'elevation')
+        $trails = HikingTrail::select('id', 'name', 'slug', 'location', 'cover_image', 'difficulty_level', 'elevation', 'distance')
                     ->take(4)
                     ->get();
 

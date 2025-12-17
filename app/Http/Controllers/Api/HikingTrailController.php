@@ -11,7 +11,7 @@ class HikingTrailController extends Controller
     public function index()
     {
         $trails = HikingTrail::select(
-            'id', 'name', 'slug', 'location', 'cover_image', 'difficulty_level', 'elevation'
+            'id', 'name', 'slug', 'location', 'cover_image', 'difficulty_level', 'elevation', 'distance'
         )->get();
 
         return response()->json([
