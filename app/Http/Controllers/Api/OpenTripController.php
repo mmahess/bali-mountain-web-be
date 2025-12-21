@@ -8,13 +8,20 @@ use Illuminate\Http\Request;
 
 class OpenTripController extends Controller
 {
-    public function index()
+    public function index(Request $request) // Tambahkan Request $request di sini
     {
-        // Tambahkan 'participants' di sini
-        $trips = \App\Models\OpenTrip::with(['user', 'hikingTrail', 'participants']) 
+        // 1. Mula query (jangan terus ->get())
+        $query = \App\Models\OpenTrip::with(['user', 'hikingTrail', 'participants']) 
                     ->withCount('participants')
-                    ->latest()
-                    ->get();
+                    ->latest();
+
+        // 2. Cek jika ada parameter 'limit' dari frontend (cth: ?limit=3)
+        if ($request->has('limit')) {
+            $query->limit($request->limit);
+        }
+
+        // 3. Baru jalankan query
+        $trips = $query->get();
 
         return response()->json(['data' => $trips]);
     }

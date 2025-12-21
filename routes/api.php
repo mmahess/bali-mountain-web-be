@@ -8,7 +8,8 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\OpenTripController;
-
+use App\Http\Controllers\Api\GalleryController;
+use App\Http\Controllers\Api\DashboardController;
 
 // --- ROUTE PUBLIC (Tidak butuh Token) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -21,7 +22,10 @@ Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/{slug}', [NewsController::class, 'show']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-use App\Http\Controllers\Api\DashboardController;
+Route::get('/galleries', [GalleryController::class, 'index']);
+Route::post('/galleries/{id}/comment', [GalleryController::class, 'storeComment']);
+Route::post('/galleries/{id}/like', [GalleryController::class, 'toggleLike']);
+Route::get('/trips', [OpenTripController::class, 'index']);
 
 // --- ROUTE PRIVATE (Harus Login / Punya Token) ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -45,4 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/joined-trips', [OpenTripController::class, 'joinedTrips']);
     Route::delete('/open-trips/{tripId}/participants/{userId}', [OpenTripController::class, 'removeParticipant']);
     Route::post('/open-trips/{id}/leave', [OpenTripController::class, 'leave']);
+    Route::post('/galleries', [GalleryController::class, 'store']);
+    Route::delete('/galleries/{id}', [GalleryController::class, 'destroy']);
+    Route::post('/galleries/{id}/comments', [GalleryController::class, 'storeComment']);
+    Route::post('/galleries/{id}/like', [GalleryController::class, 'toggleLike']);
 });
