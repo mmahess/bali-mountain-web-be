@@ -69,9 +69,13 @@ class OpenTripController extends Controller
     public function destroy(Request $request, $id)
     {
         $trip = OpenTrip::findOrFail($id);
-        if ($trip->user_id !== $request->user()->id) return response()->json(['msg' => 'Unauthorized'], 403);
+        if ($trip->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json(['msg' => 'Unauthorized - Anda tidak berhak menghapus trip ini'], 403);
+        }
+        
         $trip->delete();
-        return response()->json(['message' => 'Deleted']);
+        
+        return response()->json(['message' => 'Trip berhasil dihapus']);
     }
 
     // 5. GABUNG TRIP (JOIN)

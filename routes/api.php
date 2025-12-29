@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\OpenTripController;
 use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\ProfileController;
 
 // --- ROUTE PUBLIC (Tidak butuh Token) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -56,4 +57,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/galleries/{id}/comments', [GalleryController::class, 'storeComment']);
     Route::post('/galleries/{id}/like', [GalleryController::class, 'toggleLike']);
     Route::post('/hiking-trails/{id}/reviews', [ReviewController::class, 'store']);
+    Route::post('/profile/update', [ProfileController::class, 'update']);
+    Route::post('/profile/password', [ProfileController::class, 'changePassword']);
 });

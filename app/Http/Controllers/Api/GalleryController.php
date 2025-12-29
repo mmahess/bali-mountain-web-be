@@ -4,31 +4,53 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gallery;
+use App\Models\Comment;
+use App\Models\Like;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class GalleryController extends Controller
 {
-    // Upload Foto Baru
+    // 1. AMBIL SEMUA FOTO
+    public function index()
+    {
+        $currentUserId = auth()->guard('sanctum')->id();
+
+        $galleries = Gallery::with(['user', 'comments.user'])
+            ->withCount('likes')
+            // Cek status like user yang sedang login
+            ->withExists(['likes as is_liked' => function ($query) use ($currentUserId) {
+                $query->where('user_id', $currentUserId);
+            }])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true, 
+            'data' => $galleries
+        ]);
+    }
+
+    // 2. UPLOAD FOTO BARU
     public function store(Request $request)
     {
-        // 1. VALIDASI: Kita sesuaikan dengan UI
+        // Validasi: Max 10MB (10240 KB)
         $validator = Validator::make($request->all(), [
-            'caption' => 'nullable|string', // JADI NULLABLE (Boleh kosong)
-            'image'   => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // JADI 5MB (5120 KB)
+            'caption' => 'nullable|string',
+            'image'   => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', 
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi Gagal',
-                'errors'  => $validator->errors() // Ini yang akan dibaca frontend
+                'errors'  => $validator->errors()
             ], 422);
         }
 
         try {
-            // 2. Upload Gambar
             $imageName = null;
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
@@ -36,14 +58,12 @@ class GalleryController extends Controller
                 $file->storeAs('images', $imageName, 'public');
             }
 
-            // 3. Simpan ke Database
             $gallery = Gallery::create([
-                'user_id' => auth()->id(), // Ambil ID otomatis dari token login
-                'caption' => $request->caption ?? '', // Kalau null, isi string kosong
+                'user_id' => auth()->id(), 
+                'caption' => $request->caption ?? '', 
                 'image'   => $imageName,
             ]);
 
-            // Load user-nya sekalian biar frontend gak error pas nampilin nama
             $gallery->load('user');
 
             return response()->json([
@@ -61,23 +81,75 @@ class GalleryController extends Controller
         }
     }
 
-    // ... (Biarkan fungsi index, storeComment, toggleLike, destroy seperti sebelumnya/kode yang sudah benar)
-    
-    // Pastikan fungsi index juga sudah benar (mengambil data user & like)
-    public function index()
+    // 3. KOMENTAR
+    public function storeComment(Request $request, $id)
     {
-        $currentUserId = auth()->guard('sanctum')->id();
+        $request->validate(['body' => 'required|string']);
 
-        $galleries = Gallery::with(['user', 'comments.user'])
-            ->withCount('likes')
-            ->withExists(['likes as is_liked' => function ($query) use ($currentUserId) {
-                $query->where('user_id', $currentUserId);
-            }])
-            ->latest()
-            ->get();
+        $comment = Comment::create([
+            'gallery_id' => $id,
+            'user_id'    => auth()->id(),
+            'body'       => $request->body
+        ]);
 
-        return response()->json(['success' => true, 'data' => $galleries]);
+        // Return komentar lengkap dengan user-nya
+        $newComment = Comment::with('user')->find($comment->id);
+
+        return response()->json(['success' => true, 'data' => $newComment]);
+    }
+
+    // 4. LIKE / UNLIKE
+    public function toggleLike(Request $request, $id)
+    {
+        $userId = auth()->id();
+
+        $existingLike = Like::where('gallery_id', $id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($existingLike) {
+            $existingLike->delete();
+            $status = 'unliked';
+        } else {
+            Like::create([
+                'gallery_id' => $id,
+                'user_id'    => $userId
+            ]);
+            $status = 'liked';
+        }
+
+        $count = Like::where('gallery_id', $id)->count();
+
+        return response()->json([
+            'success' => true, 
+            'status' => $status, 
+            'total_likes' => $count
+        ]);
     }
     
-    // ... Sisanya tetap sama
+    // 5. HAPUS FOTO (UPDATE UNTUK ADMIN)
+    public function destroy($id)
+    {
+        $gallery = Gallery::find($id);
+
+        if (!$gallery) {
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan!'], 404);
+        }
+
+        // --- LOGIKA BARU DI SINI ---
+        // Izinkan hapus JIKA (User adalah Pemilik) ATAU (User adalah Admin)
+        if (auth()->id() !== $gallery->user_id && auth()->user()->role !== 'admin') {
+             return response()->json(['message' => 'Unauthorized - Anda tidak punya hak hapus'], 403);
+        }
+
+        // Hapus file fisik
+        if ($gallery->image) {
+            Storage::disk('public')->delete('images/' . $gallery->image);
+        }
+        
+        // Hapus data DB
+        $gallery->delete();
+
+        return response()->json(['success' => true, 'message' => 'Data Berhasil Dihapus!'], 200);
+    }
 }
