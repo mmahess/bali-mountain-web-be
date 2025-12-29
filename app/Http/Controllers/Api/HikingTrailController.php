@@ -6,56 +6,67 @@ use App\Http\Controllers\Controller;
 use App\Models\HikingTrail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage; // WAJIB: Import Storage
 
 class HikingTrailController extends Controller
 {
     public function index()
     {
-        // Ambil semua data untuk tabel admin
-        $trails = HikingTrail::withAvg('reviews', 'rating') 
+        $trails = HikingTrail::withAvg('reviews', 'rating')
                     ->orderBy('created_at', 'desc')
                     ->get();
         
-        return response()->json([
-            'message' => 'List data gunung berhasil diambil',
-            'data' => $trails
-        ]);
+        return response()->json(['message' => 'Success', 'data' => $trails]);
     }
 
     public function show($slug)
     {
-        $trail = HikingTrail::with(['images', 'reviews.user'])->where('slug', $slug)->firstOrFail();
+        $trail = HikingTrail::with(['images', 'reviews.user'])
+                    ->withAvg('reviews', 'rating')
+                    ->where('slug', $slug)
+                    ->firstOrFail();
         return response()->json(['data' => $trail]);
     }
 
-    // --- TAMBAH (STORE) ---
+    // --- TAMBAH DATA (STORE) ---
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string',
             'elevation' => 'required|integer',
-            'elevation_gain' => 'required|integer', // BARU
+            'elevation_gain' => 'required|integer',
             'difficulty_level' => 'required|in:easy,medium,hard',
             'distance' => 'required|numeric',
-            'estimation_time' => 'required|string', // BARU
+            'estimation_time' => 'required|string',
             'starting_point' => 'required|string',
             'ticket_price' => 'required|numeric',
-            'is_guide_required' => 'boolean', // BARU
+            'is_guide_required' => 'boolean',
             'description' => 'required|string',
-            'cover_image' => 'required|string',
+            'cover_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', 
             'map_iframe_url' => 'nullable|string'
         ]);
 
         $validated['slug'] = Str::slug($request->name) . '-' . Str::random(5);
-        // Hapus baris default elevation_gain = 0 yang lama
+
+        // --- LOGIKA UPLOAD GAMBAR ---
+        if ($request->hasFile('cover_image')) {
+            $file = $request->file('cover_image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            // Simpan di folder: storage/app/public/mountains
+            $path = $file->storeAs('mountains', $filename, 'public');
+            $validated['cover_image'] = $path;
+        }
+
+        // Pastikan boolean benar (karena FormData mengirim string)
+        $validated['is_guide_required'] = filter_var($request->is_guide_required, FILTER_VALIDATE_BOOLEAN);
 
         $trail = HikingTrail::create($validated);
 
         return response()->json(['message' => 'Gunung berhasil ditambahkan', 'data' => $trail]);
     }
 
-    // --- UPDATE ---
+    // --- UPDATE DATA ---
     public function update(Request $request, $id)
     {
         $trail = HikingTrail::findOrFail($id);
@@ -64,15 +75,16 @@ class HikingTrailController extends Controller
             'name' => 'string|max:255',
             'location' => 'string',
             'elevation' => 'integer',
-            'elevation_gain' => 'integer', // BARU
+            'elevation_gain' => 'integer',
             'difficulty_level' => 'in:easy,medium,hard',
             'distance' => 'numeric',
-            'estimation_time' => 'string', // BARU
+            'estimation_time' => 'string',
             'starting_point' => 'string',
             'ticket_price' => 'numeric',
-            'is_guide_required' => 'boolean', // BARU
+            'is_guide_required' => 'boolean',
             'description' => 'string',
-            'cover_image' => 'string',
+            // Gambar jadi NULLABLE (User tidak wajib ganti foto saat edit)
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'map_iframe_url' => 'nullable|string'
         ]);
 
@@ -80,28 +92,50 @@ class HikingTrailController extends Controller
             $validated['slug'] = Str::slug($request->name) . '-' . Str::random(5);
         }
 
+        // --- LOGIKA GANTI GAMBAR ---
+        if ($request->hasFile('cover_image')) {
+            // Hapus gambar lama dulu agar storage tidak penuh
+            if ($trail->cover_image) {
+                Storage::disk('public')->delete($trail->cover_image);
+            }
+
+            $file = $request->file('cover_image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('mountains', $filename, 'public');
+            $validated['cover_image'] = $path;
+        }
+
+        if ($request->has('is_guide_required')) {
+             $validated['is_guide_required'] = filter_var($request->is_guide_required, FILTER_VALIDATE_BOOLEAN);
+        }
+
         $trail->update($validated);
 
         return response()->json(['message' => 'Data gunung berhasil diperbarui', 'data' => $trail]);
     }
     
-    // --- HAPUS (DESTROY) ---
+    // --- HAPUS DATA ---
     public function destroy($id)
     {
         $trail = HikingTrail::findOrFail($id);
+        
+        // Hapus file fisik gambar
+        if ($trail->cover_image) {
+            Storage::disk('public')->delete($trail->cover_image);
+        }
+        
         $trail->delete();
 
-        return response()->json([
-            'message' => 'Gunung berhasil dihapus'
-        ]);
+        return response()->json(['message' => 'Gunung berhasil dihapus']);
     }
+
     public function popular(Request $request)
     {
-        $limit = $request->input('limit', 5); // Default 5 item
+        $limit = $request->input('limit', 5);
 
-        $trails = \App\Models\HikingTrail::withAvg('reviews', 'rating') // Hitung rating
-                    ->orderByDesc('reviews_avg_rating') // Urutkan dari bintang 5 ke 1
-                    ->orderByDesc('created_at')         // Jika rating sama, ambil yang terbaru
+        $trails = HikingTrail::withAvg('reviews', 'rating')
+                    ->orderByDesc('reviews_avg_rating')
+                    ->orderByDesc('created_at')
                     ->limit($limit)
                     ->get();
 

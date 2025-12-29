@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\NewsCommentController;
 
 // --- ROUTE PUBLIC (Tidak butuh Token) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -59,4 +60,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/hiking-trails/{id}/reviews', [ReviewController::class, 'store']);
     Route::post('/profile/update', [ProfileController::class, 'update']);
     Route::post('/profile/password', [ProfileController::class, 'changePassword']);
+    Route::post('/news/{id}/comments', [NewsCommentController::class, 'store']);
+    Route::delete('/news/comments/{id}', [NewsCommentController::class, 'destroy']);
 });

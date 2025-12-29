@@ -16,6 +16,7 @@ class News extends Model
     return $this->belongsTo(User::class);
     }
 
-    // Jika nanti butuh relasi ke user
-    // public function user() { return $this->belongsTo(User::class); }
+    public function comments() {
+    return $this->hasMany(NewsComment::class)->latest(); // Komentar terbaru di atas
+}
 }
