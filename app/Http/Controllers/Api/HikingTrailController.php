@@ -12,7 +12,9 @@ class HikingTrailController extends Controller
     public function index()
     {
         // Ambil semua data untuk tabel admin
-        $trails = HikingTrail::orderBy('created_at', 'desc')->get();
+        $trails = HikingTrail::withAvg('reviews', 'rating') 
+                    ->orderBy('created_at', 'desc')
+                    ->get();
         
         return response()->json([
             'message' => 'List data gunung berhasil diambil',
@@ -91,6 +93,21 @@ class HikingTrailController extends Controller
 
         return response()->json([
             'message' => 'Gunung berhasil dihapus'
+        ]);
+    }
+    public function popular(Request $request)
+    {
+        $limit = $request->input('limit', 5); // Default 5 item
+
+        $trails = \App\Models\HikingTrail::withAvg('reviews', 'rating') // Hitung rating
+                    ->orderByDesc('reviews_avg_rating') // Urutkan dari bintang 5 ke 1
+                    ->orderByDesc('created_at')         // Jika rating sama, ambil yang terbaru
+                    ->limit($limit)
+                    ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $trails
         ]);
     }
 }

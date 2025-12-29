@@ -9,8 +9,6 @@ class HikingTrail extends Model
 {
     use HasFactory;
 
-    // --- TAMBAHKAN BARIS INI ---
-    // Artinya: Tidak ada kolom yang dijaga (semua boleh diisi)
     protected $guarded = []; 
 
     // Relasi ke Gambar Galeri
